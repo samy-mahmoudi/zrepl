@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -16,9 +17,15 @@ import (
 	"github.com/zrepl/zrepl/daemon/logging/trace"
 )
 
-// FIXME: this test relies on timing and is thus rather flaky
-// (relies on scheduler responsiveness of < 500ms)
+func skipIfCircleCi(t *testing.T) {
+	if os.Getenv("CIRCLECI") != "" {
+		t.Skip("This test is skipped in CircleCI because it relies on scheduler responsiveness < 500ms, which.")
+	}
+}
+
 func TestPqNotconcurrent(t *testing.T) {
+	skipIfCircleCi(t)
+
 	ctx, end := trace.WithTaskFromStack(context.Background())
 	defer end()
 	var ctr uint32
@@ -90,6 +97,8 @@ func (r record) String() string {
 // Hence, perform some statistics on the wakeup times and assert that the mean wakeup
 // times for each step are close together.
 func TestPqConcurrent(t *testing.T) {
+	skipIfCircleCi(t)
+
 	ctx, end := trace.WithTaskFromStack(context.Background())
 	defer end()
 
